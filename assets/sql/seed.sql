@@ -29,10 +29,10 @@ VALUES
 ("Tom","Jones",1,null),
 ("Sandra","Williams",12,1),
 ("Linda","Johnson",2,null),
-("Steve","Jobs",6,2),
+("Steve","Jobs",6,3),
 ("Henry","Aaron",3,null),
-("Jessica","Simpson",14,3),
+("Jessica","Simpson",14,5),
 ("Nathan","Dunbar",4,null),
-("Sylvia","Davis",10,4),
+("Sylvia","Davis",10,7),
 ("William","Parks",5,null),
-("Julio","Ortiz",15,5);
+("Julio","Ortiz",15,9);

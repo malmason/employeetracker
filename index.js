@@ -31,7 +31,10 @@ const promptUser = async () => {
     }
   ])
   .then((answer) => {
-    let sql = ""
+    let sql = "";
+    let sql2 = "";
+    let roles = [];
+    let mgrs = [];
     switch(answer.dowhat) {
       case "View All Employees":
         sql = `SELECT * FROM employee`
@@ -58,17 +61,87 @@ const promptUser = async () => {
         });
         break;
       case "Add Employee":
-
+        // Get a list of the roles and the managers
+        sql = `SELECT title FROM role ORDER BY title`
+        sql2 = `SELECT CONCAT(first_name, " " , last_name) as manager
+        FROM employee WHERE manager_id IS NULL 
+        ORDER BY last_name`
+        connection.query(sql, (err,res) => {
+          if(err) throw err;
+          res.forEach(({title})=> roles.push(title));
+        });
+        connection.query(sql2,async (err,res) => {
+          if(err) throw err;
+          res.forEach(({manager})=> mgrs.push(manager));
+          addNewEmployee(roles,mgrs);
+        });
+        break;
       case "Remove Employee":
 
       case "Update Employee Role":
 
       case "Update Employee Manager":
-
+     
       case "Exit Application":
-
+        
     };
   })
+};
+
+const addNewEmployee = async (roles, managers) => {
+  let mgrID = "";
+  let roleID = "";
+  
+  let mgrQry = `SELECT id FROM employee WHERE CONCAT(first_name, " " , last_name) = ?`;
+
+  inquirer.prompt([
+    {
+      name: 'fname',
+      type: 'input',
+      message: 'Enter the Employee\'s First Name!'
+    },
+    {
+      name: 'lname',
+      type: 'input',
+      message: 'Enter the Employee\'s Last Name!'
+    },
+    {
+      name: 'roles',
+      type: 'list',
+      message: 'What is the role for this employee?',
+      choices: roles,
+    },
+    {
+      name: 'manager',
+      type: 'list',
+      message: 'Who is this employee\'s manager?',
+      choices: managers,
+    },
+  ]).then((empdata) => {
+    let roleQry = `SELECT id FROM role WHERE title = "${empdata.roles}"`;
+    connection.query(roleQry, (err,res) => {
+      if(err) throw err;
+      roleID = res[0].id;
+      console.log(roleID);
+    });
+    connection.query(mgrQry,[empdata.manager], (err,res) => {
+      if(err) throw err;
+      mgrID = res[0].id;
+      console.log(mgrID);
+
+      let query = `INSERT INTO employee(first_name,last_name,role_id,manager_id)
+        VALUES ("${empdata.fname}","${empdata.lname}",${roleID},${mgrID})`;
+        console.log(query);
+        connection.query(query, (err,res) => {
+          if(err) throw err;
+          console.log(`${res.affectedRows} employee added!\n`)
+          console.log(`Added ${empdata.fname} ${empdata.lname} to the database!`);
+          promptUser();
+      });
+
+    });
+    
+  });
 };
 
 const viewByDept = async (departments) => {
@@ -112,6 +185,18 @@ const viewByMgr = async (managers) => {
       displayTable(table.getTable(res));
       promptUser();
     });
+  });
+};
+
+const getManagers = async () => {
+  let query = `SELECT id, CONCAT(first_name, " " , last_name) as manager
+  FROM employee WHERE manager_id IS NULL 
+  ORDER BY last_name`;
+  
+  connection.query(query,(err,res) => {
+    if(err) throw err;
+    console.log(res);
+    return res;
   });
 };
 
