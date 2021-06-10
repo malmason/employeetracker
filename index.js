@@ -57,7 +57,8 @@ const promptUser = async () => {
         WHERE manager_id IS NULL ORDER BY last_name`
         connection.query(sql,(err,res) => {
           if(err) throw err;
-          viewByMgr(res);
+          res.forEach(({manager})=> mgrs.push(manager));
+          viewByMgr(mgrs);
         });
         break;
       case "Add Employee":
@@ -167,36 +168,32 @@ const viewByDept = async (departments) => {
 };
 
 const viewByMgr = async (managers) => {
+  let mgrID = "";
   inquirer.prompt({
     type: 'list',
     name: 'mgr',
     message: 'Which managers department would you like to view?',
     choices: managers,
   }).then((answer) => {
-    let query = `SELECT e.id, e.first_name, e.last_name, r.title,
-    d.name as department, r.salary, CONCAT(e2.first_name, " " ,e2.last_name) as manager
-    FROM department d JOIN role r ON d.id = r.department_id 
-    JOIN employee e ON r.id = e.role_id
-    LEFT JOIN employee e2 ON e.manager_id = e2.id
-    where d.name = ?
-    ORDER BY d.name, e.last_name`;
-    connection.query(query,[answer.mgr],(err, res) => {
-      if(err) throw err;
-      displayTable(table.getTable(res));
-      promptUser();
-    });
-  });
-};
 
-const getManagers = async () => {
-  let query = `SELECT id, CONCAT(first_name, " " , last_name) as manager
-  FROM employee WHERE manager_id IS NULL 
-  ORDER BY last_name`;
+    let query = `SELECT e.id AS manager FROM employee e WHERE CONCAT(e.first_name, " " ,e.last_name) =?`
+    connection.query(query,[answer.mgr],(err,res) => {
+      if(err) throw err;
+      mgrID = res[0].manager;
+
+      query = `SELECT e.id, e.first_name, e.last_name, r.title,
+      d.name as department, r.salary
+      FROM department d JOIN role r ON d.id = r.department_id 
+      JOIN employee e ON r.id = e.role_id
+      where manager_id = ${mgrID}
+      ORDER BY d.name, e.last_name`;
   
-  connection.query(query,(err,res) => {
-    if(err) throw err;
-    console.log(res);
-    return res;
+      connection.query(query,(err, res) => {
+        if(err) throw err;
+        displayTable(table.getTable(res));
+        promptUser();
+      });
+    });
   });
 };
 
