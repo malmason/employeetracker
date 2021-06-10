@@ -27,7 +27,7 @@ const promptUser = async () => {
       type: 'list',
       name: 'dowhat',
       message: 'What would you like to do?',
-      choices: ['View All Employees', 'View All Employees By Department', 'View All Employees By Manager','Add Employee', 'Remove Employee','Update Employee Role','Update Employee Manager','Exit Application'],
+      choices: ['View All Employees', 'View All Employees By Department', 'View All Employees By Manager','View Departments','View Roles','Add Employee', 'Remove Employee','Update Employee Role','Update Employee Manager','Exit Application'],
     }
   ])
   .then((answer) => {
@@ -59,6 +59,22 @@ const promptUser = async () => {
           if(err) throw err;
           res.forEach(({manager})=> mgrs.push(manager));
           viewByMgr(mgrs);
+        });
+        break;
+      case "View Departments":
+        sql = `SELECT * FROM department`
+        connection.query(sql,(err, res) => {
+          if(err) throw err;
+          displayTable(table.getTable(res));
+          promptUser();
+        });
+        break;
+      case "View Roles":
+        sql = `SELECT * FROM role`
+        connection.query(sql,(err, res) => {
+          if(err) throw err;
+          displayTable(table.getTable(res));
+          promptUser();
         });
         break;
       case "Add Employee":
