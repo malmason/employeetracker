@@ -38,6 +38,7 @@ const promptUser = async () => {
   .then((answer) => {
     let roles = [];
     let mgrs = [];
+    let depts = [];
     switch(answer.dowhat) {
       case "View All Employees":
         sql = `SELECT * FROM employee`
@@ -84,7 +85,12 @@ const promptUser = async () => {
         addNewDept();
         break;
       case "Add Role":
-
+        sql = `SELECT name FROM department`;
+        connection.query(sql, async (err, res)  => {
+          if(err) throw err;
+          res.forEach(({name})=> depts.push (name));
+          addNewRole(depts);
+        });
         break;
       case "Add Employee":
         // Get a list of the roles and the managers
@@ -127,6 +133,37 @@ const addNewDept = async () => {
       if(err) throw err;
       console.log(`${res.affectedRows} department added!\n`)
       console.log(`Added ${data.dept} to the database!`);
+      promptUser();
+    });
+  });
+};
+
+
+const addNewRole = async (departments) => {
+  inquirer.prompt([
+    {
+      name: 'role',
+      type: 'input',
+      message: 'What is the title of the new Role you want to create?'
+    },
+    {
+      name: 'salary',
+      type: 'input',
+      message: 'What is the salary for this position?'
+    },
+    {
+      name: 'dept',
+      type: 'list',
+      message: 'Which department does this role belong to?',
+      choices: departments
+    }
+  ]).then((data) =>{
+    sql = `INSERT INTO role(title,salary,department_id) VALUES ("${data.role}",${data.salary},
+    (SELECT id FROM department WHERE name = "${data.dept}"))`
+    connection.query(sql, (err,res) => {
+      if(err) throw err;
+      console.log(`${res.affectedRows} role added!\n`)
+      console.log(`Added ${data.role} for the ${data.dept} department to the database!`);
       promptUser();
     });
   });
