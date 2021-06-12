@@ -3,7 +3,7 @@ const inquirer = require('inquirer');
 const chalk = require('chalk'); // Used to color the text in the terminal
 const figlet = require('figlet'); // for creating a command-line banner
 const table = require('console.table');
-const department = require('./lib/departments');
+// const department = require('./lib/departments');
 
 
 let sql = "";
@@ -23,7 +23,7 @@ const connection = mysql.createConnection(conn);
 
 connection.connect((err) => {
   if(err) throw err;
-  console.log(`conneced as id ${connection.threadId}`); 
+  console.log(`connected as id ${connection.threadId}`); 
 });
 
 const promptUser = async () => {
@@ -39,6 +39,7 @@ const promptUser = async () => {
     let roles = [];
     let mgrs = [];
     let depts = [];
+    let emps = [];
     switch(answer.dowhat) {
       case "View All Employees":
         sql = `SELECT * FROM employee`
@@ -88,7 +89,7 @@ const promptUser = async () => {
         sql = `SELECT name FROM department`;
         connection.query(sql, async (err, res)  => {
           if(err) throw err;
-          res.forEach(({name})=> depts.push (name));
+          res.forEach(({name})=> depts.push(name));
           addNewRole(depts);
         });
         break;
@@ -109,7 +110,14 @@ const promptUser = async () => {
         });
         break;
       case "Remove Employee":
-        
+        sql = `SELECT CONCAT(first_name, " " , last_name) as employee
+        FROM employee ORDER BY last_name`;
+        connection.query(sql, async (err, res)  => {
+          if(err) throw err;
+          res.forEach(({employee})=> emps.push(employee));
+          removeEmployee(emps);
+        });
+        break;
       case "Update Employee Role":
 
       case "Update Employee Manager":
@@ -119,7 +127,24 @@ const promptUser = async () => {
     };
   })
 };
-
+const removeEmployee = async (employees) => {
+  inquirer.prompt([
+    {
+      name: 'employee',
+      type: 'list',
+      message: 'Select the employee yuo would like to remove!',
+      choices: employees
+    }
+  ]).then((data)=> {
+    sql = `DELETE FROM employee WHERE CONCAT(first_name, " " , last_name) = "${data.employee}"`
+      connection.query(sql, (err,res)=> {
+        if(err) throw err;
+        console.log(`${res.affectedRows} employee deleted from the database!`);
+        console.log(`Deleted "${data.employee}"!`);
+        promptUser();
+      });
+  });
+};
 const addNewDept = async () => {
   inquirer.prompt([
    {
