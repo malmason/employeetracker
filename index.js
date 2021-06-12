@@ -3,6 +3,11 @@ const inquirer = require('inquirer');
 const chalk = require('chalk'); // Used to color the text in the terminal
 const figlet = require('figlet'); // for creating a command-line banner
 const table = require('console.table');
+const department = require('./lib/departments');
+
+
+let sql = "";
+let sql2 = "";
 
 // Setup connection string. 
 const conn = {
@@ -27,12 +32,10 @@ const promptUser = async () => {
       type: 'list',
       name: 'dowhat',
       message: 'What would you like to do?',
-      choices: ['View All Employees', 'View All Employees By Department', 'View All Employees By Manager','View Departments','View Roles','Add Employee', 'Remove Employee','Update Employee Role','Update Employee Manager','Exit Application'],
+      choices: ['View All Employees', 'View All Employees By Department', 'View All Employees By Manager','View Departments','View Roles','Add Department','Add Role','Add Employee', 'Remove Employee','Update Employee Role','Update Employee Manager','Exit Application'],
     }
   ])
   .then((answer) => {
-    let sql = "";
-    let sql2 = "";
     let roles = [];
     let mgrs = [];
     switch(answer.dowhat) {
@@ -62,8 +65,8 @@ const promptUser = async () => {
         });
         break;
       case "View Departments":
-        sql = `SELECT * FROM department`
-        connection.query(sql,(err, res) => {
+        sql = `SELECT * FROM department`;
+        connection.query(sql, async (err, res)  => {
           if(err) throw err;
           displayTable(table.getTable(res));
           promptUser();
@@ -76,6 +79,12 @@ const promptUser = async () => {
           displayTable(table.getTable(res));
           promptUser();
         });
+        break;
+      case "Add Department":
+        addNewDept();
+        break;
+      case "Add Role":
+
         break;
       case "Add Employee":
         // Get a list of the roles and the managers
@@ -94,7 +103,7 @@ const promptUser = async () => {
         });
         break;
       case "Remove Employee":
-
+        
       case "Update Employee Role":
 
       case "Update Employee Manager":
@@ -103,6 +112,24 @@ const promptUser = async () => {
         
     };
   })
+};
+
+const addNewDept = async () => {
+  inquirer.prompt([
+   {
+      name: 'dept',
+      type: 'input',
+      message: 'What is the name of the new depatment?'
+    }
+  ]).then((data) =>{
+    sql = `INSERT INTO department(name) VALUES ("${data.dept}")`
+    connection.query(sql, (err,res) => {
+      if(err) throw err;
+      console.log(`${res.affectedRows} department added!\n`)
+      console.log(`Added ${data.dept} to the database!`);
+      promptUser();
+    });
+  });
 };
 
 const addNewEmployee = async (roles, managers) => {
@@ -148,7 +175,6 @@ const addNewEmployee = async (roles, managers) => {
 
       let query = `INSERT INTO employee(first_name,last_name,role_id,manager_id)
         VALUES ("${empdata.fname}","${empdata.lname}",${roleID},${mgrID})`;
-        console.log(query);
         connection.query(query, (err,res) => {
           if(err) throw err;
           console.log(`${res.affectedRows} employee added!\n`)
@@ -184,33 +210,21 @@ const viewByDept = async (departments) => {
 };
 
 const viewByMgr = async (managers) => {
-  let mgrID = "";
   inquirer.prompt({
     type: 'list',
     name: 'mgr',
     message: 'Which managers department would you like to view?',
     choices: managers,
   }).then((answer) => {
-
-    let query = `SELECT e.id AS manager FROM employee e WHERE CONCAT(e.first_name, " " ,e.last_name) =?`
-    connection.query(query,[answer.mgr],(err,res) => {
-      if(err) throw err;
-      mgrID = res[0].manager;
-
-      query = `SELECT e.id, e.first_name, e.last_name, r.title,
-      d.name as department, r.salary
-      FROM department d JOIN role r ON d.id = r.department_id 
-      JOIN employee e ON r.id = e.role_id
-      where manager_id = ${mgrID}
-      ORDER BY d.name, e.last_name`;
-  
+    // Get all of the employee information by manager, capture manager id from the sub-query in the Where clause.
+    let query = `SELECT * FROM employee WHERE manager_id = 
+    (SELECT id FROM employee WHERE CONCAT(first_name, " " ,last_name) ="${answer.mgr}")`
       connection.query(query,(err, res) => {
         if(err) throw err;
         displayTable(table.getTable(res));
         promptUser();
       });
     });
-  });
 };
 
 const displayTable = (data) => {
