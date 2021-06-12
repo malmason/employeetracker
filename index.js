@@ -32,7 +32,7 @@ const promptUser = async () => {
       type: 'list',
       name: 'dowhat',
       message: 'What would you like to do?',
-      choices: ['View All Employees', 'View All Employees By Department', 'View All Employees By Manager','View Departments','View Roles','Add Department','Add Role','Add Employee', 'Remove Employee','Update Employee Role','Update Employee Manager','Exit Application'],
+      choices: ['View All Employees', 'View All Employees By Department', 'View All Employees By Manager','View Departments','View Roles','Add Department','Add Role','Add Employee', 'Remove Employee','Update Employee Role','Update Employee Manager','View Total Utilized Budget by Department','Exit Application'],
     }
   ])
   .then((answer) => {
@@ -75,7 +75,7 @@ const promptUser = async () => {
         });
         break;
       case "View Roles":
-        sql = `SELECT * FROM role`
+        sql = `SELECT id,title,CONCAT("$",FORMAT(salary,2)) AS Salary,department_id FROM role`
         connection.query(sql,(err, res) => {
           if(err) throw err;
           displayTable(table.getTable(res));
@@ -121,7 +121,21 @@ const promptUser = async () => {
       case "Update Employee Role":
 
       case "Update Employee Manager":
-     
+
+      case "View Total Utilized Budget by Department":
+        sql = `SELECT d.name,CONCAT("$",FORMAT(SUM(r.salary),2)) AS TotalBudget
+        FROM department d JOIN role r
+        ON d.id = r.department_id
+        JOIN employee e ON r.id = e.role_id
+        GROUP BY d.name
+        ORDER BY d.name`;
+        connection.query(sql,(err, res) => {
+          if(err) throw err;
+          displayTable(table.getTable(res));
+          promptUser();
+        });
+        break;
+
       case "Exit Application":
         
     };
