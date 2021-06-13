@@ -9,6 +9,7 @@ const table = require('console.table');
 let sql = "";
 let sql2 = "";
 
+
 // Setup connection string. 
 const conn = {
   host: 'localhost',
@@ -119,8 +120,35 @@ const promptUser = async () => {
         });
         break;
       case "Update Employee Role":
-
+        sql = `SELECT CONCAT(first_name, " " , last_name) as employee
+        FROM employee ORDER BY last_name`;
+        sql2 = `SELECT title FROM role ORDER BY title`
+        connection.query(sql, async (err, res)  => {
+          if(err) throw err;
+          res.forEach(({employee})=> emps.push(employee));
+        });
+        connection.query(sql2,async (err,res) => {
+          if(err) throw err;
+          res.forEach(({title})=> roles.push(title));
+          updateEmployeeRole(emps,roles);
+        });
+        break;
       case "Update Employee Manager":
+        sql = `SELECT CONCAT(first_name, " " , last_name) as employee
+        FROM employee ORDER BY last_name`;
+        sql2 = `SELECT CONCAT(first_name, " " , last_name) as manager
+        FROM employee WHERE manager_id IS NULL 
+        ORDER BY last_name`
+        connection.query(sql, async (err, res)  => {
+          if(err) throw err;
+          res.forEach(({employee})=> emps.push(employee));
+        });
+        connection.query(sql2,async (err,res) => {
+          if(err) throw err;
+          res.forEach(({manager})=> mgrs.push(manager));
+          updateEmployeeMgr(emps,mgrs);
+        });
+        break;
 
       case "View Total Utilized Budget by Department":
         sql = `SELECT d.name,CONCAT("$",FORMAT(SUM(r.salary),2)) AS TotalBudget
@@ -137,16 +165,74 @@ const promptUser = async () => {
         break;
 
       case "Exit Application":
-        
+        connection.end();
     };
   })
+};
+const updateEmployeeMgr = async (employees, managers) => {
+  let mgrID = "";
+  inquirer.prompt([
+    {
+      name: 'employee',
+      type: 'list',
+      message: 'Select the employee whose manager you would like to change!',
+      choices: employees
+    },
+    {
+      name: 'mgr',
+      type: 'list',
+      message: 'Select the manager you would like to assign to this employee!',
+      choices: managers
+    }
+  ]).then((data)=> {
+    
+    sql2 =`SELECT id from employee WHERE CONCAT(first_name, " " , last_name) = "${data.mgr}"`
+  
+    connection.query(sql, async (err, res)  => {
+      if(err) throw err;
+      mgrID = res[0].id;
+       sql = `UPDATE employee SET manager_id = ${mgrID} WHERE CONCAT(first_name, " " , last_name) = "${data.employee}"`
+    });
+  
+    connection.query(sql, (err,res)=> {
+      if(err) throw err;
+      console.log(`${res.affectedRows} row updated!`);
+      console.log(`Updated "${data.employee}", changed their manager to "${data.mgr}"!`);
+      promptUser();
+    });
+  });
+
+};
+const updateEmployeeRole = async(employees,roles) => {
+  inquirer.prompt([
+    {
+      name: 'employee',
+      type: 'list',
+      message: 'Select the employee whose role you would like to change!',
+      choices: employees
+    },
+    {
+      name: 'role',
+      type: 'list',
+      message: 'Select the role you would like to assign to this employee!',
+      choices: roles
+    }
+  ]).then((data)=> {
+    sql = `UPDATE employee SET role_id = (SELECT id FROM role WHERE title = "${data.role}") WHERE CONCAT(first_name, " " , last_name) = "${data.employee}"`
+      connection.query(sql, (err,res)=> {
+        if(err) throw err;
+        console.log(`${res.affectedRows} row updated!`);
+        console.log(`Updated "${data.employee}", changed their role to "${data.role}"!`);
+        promptUser();
+      });
+  });
 };
 const removeEmployee = async (employees) => {
   inquirer.prompt([
     {
       name: 'employee',
       type: 'list',
-      message: 'Select the employee yuo would like to remove!',
+      message: 'Select the employee you would like to remove!',
       choices: employees
     }
   ]).then((data)=> {
