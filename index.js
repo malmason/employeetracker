@@ -133,7 +133,7 @@ const promptUser = async () => {
         break;
       case "Update Employee Manager":
         sql = `SELECT CONCAT(first_name, " " , last_name) as employee
-        FROM employee ORDER BY last_name`;
+        FROM employee WHERE manager_id IS NOT NULL ORDER BY last_name`;
         sql2 = `SELECT CONCAT(first_name, " " , last_name) as manager
         FROM employee WHERE manager_id IS NULL 
         ORDER BY last_name`
@@ -190,8 +190,7 @@ const updateEmployeeMgr = async (employees, managers) => {
       if(err) throw err;
       mgrID = res[0].id;
        sql = `UPDATE employee SET manager_id = ${mgrID} WHERE CONCAT(first_name, " " , last_name) = "${data.employee}"`
-       console.log(sql);
-
+  
       connection.query(sql, async (err,res)=> {
         if(err) throw err;
         console.log(`${res.affectedRows} row updated!`);
@@ -326,12 +325,10 @@ const addNewEmployee = async (roles, managers) => {
     connection.query(roleQry, (err,res) => {
       if(err) throw err;
       roleID = res[0].id;
-      console.log(roleID);
     });
     connection.query(mgrQry,[empdata.manager], (err,res) => {
       if(err) throw err;
       mgrID = res[0].id;
-      console.log(mgrID);
 
       let query = `INSERT INTO employee(first_name,last_name,role_id,manager_id)
         VALUES ("${empdata.fname}","${empdata.lname}",${roleID},${mgrID})`;
