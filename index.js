@@ -5,10 +5,8 @@ const figlet = require('figlet'); // for creating a command-line banner
 const table = require('console.table');
 // const department = require('./lib/departments');
 
-
 let sql = "";
 let sql2 = "";
-
 
 // Setup connection string. 
 const conn = {
@@ -24,7 +22,7 @@ const connection = mysql.createConnection(conn);
 
 connection.connect((err) => {
   if(err) throw err;
-  console.log(`connected as id ${connection.threadId}`); 
+  console.log(`connected as id ${connection.threadId}\n`); 
 });
 
 const promptUser = async () => {
@@ -188,20 +186,20 @@ const updateEmployeeMgr = async (employees, managers) => {
     
     sql2 =`SELECT id from employee WHERE CONCAT(first_name, " " , last_name) = "${data.mgr}"`
   
-    connection.query(sql, async (err, res)  => {
+    connection.query(sql2, async (err, res)  => {
       if(err) throw err;
       mgrID = res[0].id;
        sql = `UPDATE employee SET manager_id = ${mgrID} WHERE CONCAT(first_name, " " , last_name) = "${data.employee}"`
-    });
-  
-    connection.query(sql, (err,res)=> {
-      if(err) throw err;
-      console.log(`${res.affectedRows} row updated!`);
-      console.log(`Updated "${data.employee}", changed their manager to "${data.mgr}"!`);
-      promptUser();
+       console.log(sql);
+
+      connection.query(sql, async (err,res)=> {
+        if(err) throw err;
+        console.log(`${res.affectedRows} row updated!`);
+        console.log(`Updated "${data.employee}", changed their manager to "${data.mgr}"!`);
+        promptUser();
+      });
     });
   });
-
 };
 const updateEmployeeRole = async(employees,roles) => {
   inquirer.prompt([
