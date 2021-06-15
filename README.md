@@ -35,9 +35,16 @@ You will need to install the following packages using npm. You will also need a 
 
 ---
 
-🎥  [Video Demonstration](https://drive.google.com/file/d/1S_Ns-R-o3poZFmTGxZJVrRXVcwTr_8NM/view?usp=sharing)
+## 🉑 Tests
+
+To test this application, open a command prompt and run node index.js or npm start. The video link below demonstrates the functionality of the program.
+
+ [Video Demonstration](https://drive.google.com/file/d/1S_Ns-R-o3poZFmTGxZJVrRXVcwTr_8NM/view?usp=sharing)
 
 ## 🤸‍♂️Challenges/Successes
+* How to handle look-up of id's for various queries to be used in subsequent calls to the database.
+  * Modified multiple queries to use a sub-query in the Where clause to retrieve the correct id.
+* `TODO:` Refactor the code to utilize classes for handling all SQL calls to the database. 
 
 ## 📸 Screenshots
 

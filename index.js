@@ -44,8 +44,7 @@ const promptUser = async () => {
         sql = `SELECT * FROM employee`
         connection.query(sql,(err, res) => {
           if(err) throw err;
-          displayTable(table.getTable(res));
-          promptUser();
+          displayTable(res);
         });
         break;
       case "View All Employees By Department":
@@ -69,16 +68,14 @@ const promptUser = async () => {
         sql = `SELECT * FROM department`;
         connection.query(sql, async (err, res)  => {
           if(err) throw err;
-          displayTable(table.getTable(res));
-          promptUser();
+          displayTable(res);
         });
         break;
       case "View Roles":
         sql = `SELECT id,title,CONCAT("$",FORMAT(salary,2)) AS Salary,department_id FROM role`
         connection.query(sql,(err, res) => {
           if(err) throw err;
-          displayTable(table.getTable(res));
-          promptUser();
+          displayTable(res);
         });
         break;
       case "Add Department":
@@ -157,11 +154,9 @@ const promptUser = async () => {
         ORDER BY d.name`;
         connection.query(sql,(err, res) => {
           if(err) throw err;
-          displayTable(table.getTable(res));
-          promptUser();
+          displayTable(res);
         });
         break;
-
       case "Exit Application":
         connection.end();
     };
@@ -360,8 +355,7 @@ const viewByDept = async (departments) => {
     ORDER BY d.name, e.last_name`;
     connection.query(query,[answer.dept],(err, res) => {
       if(err) throw err;
-      displayTable(table.getTable(res));
-      promptUser();
+      displayTable(res);
     });
   });
 };
@@ -378,14 +372,14 @@ const viewByMgr = async (managers) => {
     (SELECT id FROM employee WHERE CONCAT(first_name, " " ,last_name) ="${answer.mgr}")`
       connection.query(query,(err, res) => {
         if(err) throw err;
-        displayTable(table.getTable(res));
-        promptUser();
+        displayTable(res);
       });
     });
 };
 
 const displayTable = (data) => {
-  console.log(data);
+  console.log(table.getTable(data));
+  promptUser();
 };
 
 const init = async () => {
